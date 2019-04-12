@@ -124,7 +124,7 @@ app.use(function (err, req, res, next) {
 
 // web server 8080
 
-app.listen(8888, () => console.log('-- [ FRIENDEALER NODE ] SERVER STARTED LISTENING ON PORT 80 --'));
+app.listen(80, () => console.log('-- [ FRIENDEALER NODE ] SERVER STARTED LISTENING ON PORT 80 --'));
 
 // Socket Server Engine
 
