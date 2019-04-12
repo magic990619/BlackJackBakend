@@ -1,0 +1,25 @@
+{
+  "name": "ikita",
+  "description": "Web-App für Kita-Verwaltung",
+  "main": "index.js",
+  "authors": [
+    "SimpleVisor"
+  ],
+  "license": "ISC",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/lib",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.6.7",
+    "angular-ui-calendar": "^1.0.2",
+    "angular-bootstrap-simple-chat": "^0.4.0",
+    "socket.io-client": "^2.0.4"
+  }
+}
