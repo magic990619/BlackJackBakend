@@ -299,3 +299,19 @@ module.exports.transferCredit = async function (req, res) {
         res.status(401).json({success: false, error: err});
     }
 }
+
+module.exports.updatePlayerName = async function (req, res) {
+    try {
+        console.log(req.body.account_id);
+        console.log(req.body.user_name);
+        var account = await AccountSchema.findOne({_id: req.body.account_id});
+        account.user_name = req.body.user_name;
+
+        var account = await AccountSchema.update({_id: req.body.account_id}, account);
+
+        res.status(201).json({success: true, account: account});
+
+    } catch(error) {
+        res.status(401).json({success: false, error: err});
+    }
+}

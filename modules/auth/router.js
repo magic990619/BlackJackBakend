@@ -34,6 +34,7 @@ router.post('/setAccountAvatar', _account.setAccountAvatar);
 router.post('/addAccountData', _account.addAccountData);
 router.post('/resetPassword', _account.resetPassword);
 router.post('/resetPasswordByEmail', _account.resetPasswordByEmail);
+router.post('/updatePlayerName', _account.updatePlayerName);
 
 router.post('/transferCredit', _account.transferCredit);
 router.post('/getAccountDataByEmail', _account.getAccountDataByEmail);
