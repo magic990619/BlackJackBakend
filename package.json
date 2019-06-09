@@ -1,7 +1,7 @@
 {
-  "name": "friendealer",
+  "name": "blackjack",
   "version": "1.0.0",
-  "description": "Friendealer Node Backend",
+  "description": "blackjack Node Backend",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -34,6 +34,7 @@
     "passport-local-mongoose": "^4.4.0",
     "screenfull": "^3.3.2",
     "socket.io": "^2.0.4",
+    "socket.io-client": "^2.2.0",
     "socket.io-file": "^2.0.14",
     "socket.io-file-client": "^2.0.12",
     "socket.io.users": "^2.0.2",

@@ -1,5 +1,10 @@
+// var socket = require('socket.io-client')('http://192.168.100.124:8889');
+var socket = require('socket.io-client')('http://104.237.5.22:8889');
 var DataSchema = require('../schemas/game_data_schema.js');
 var accountSchema = require('../schemas/account_schema');
+var ContestsDataSchema = require('../schemas/contests_data_schema');
+var ContestsSchema = require('../schemas/contests_schema');
+var NotificationSchema = require('../schemas/notifications_schema');
 
 module.exports.getAllGameData = async function (req, res) {
     try {
@@ -159,6 +164,7 @@ module.exports.getGameDataByGameId = async function (req, res) {
 
 module.exports.saveGameData = async function (req, res) {
     try {
+        
         var account = await accountSchema.findOne({_id: req.body.account_id});
         account.credit = req.body.credit;
         if (req.body.won_credit > 0)
@@ -198,6 +204,34 @@ module.exports.saveGameData = async function (req, res) {
                                                 "game_id"      : req.body.game_id,
                                                 "played_date"  : req.body.played_date}, gameData);
         }
+        if (req.body.contest_mode == 1) {
+            var contest_data = await ContestsDataSchema.findOne({"account_id": req.body.account_id,
+                                                           "contest_id": req.body.contest_id});
+            if (req.body.contest_type == "Consective Wins") {
+                if (contest_data.user_score < parseInt(req.body.consec_wins)) {
+                    contest_data.user_score = parseInt(req.body.consec_wins);
+                }
+            } else {
+                contest_data.user_score += parseInt(req.body.score_get);
+            }
+            if (contest_data.user_score >= parseInt(req.body.contest_goal)) {
+                contest_data.winner_status = true;
+                contest_data.winner_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);
+                var current_contest = await ContestsSchema.findOne({"_id": req.body.contest_id});
+                var account = await accountSchema.findOne({_id: req.body.account_id});
+                var new_notification = {
+                    user_id: account._id,
+                    title: "New Winner!",
+                    notification: account.user_name + " won the contest: " + current_contest.contest_name,
+                };
+                new_notification = await NotificationSchema.create(new_notification);
+                socket.emit('send:winner_notification', {
+                    winner_name: account.user_name,
+                    contest_name: current_contest.contest_name
+                });
+            }
+            contest_data = await ContestsDataSchema.update({"_id": contest_data._id}, contest_data);
+        }
         res.status(201).json({success: true, doc: doc});
         
     } catch (error) {
@@ -216,6 +250,70 @@ module.exports.saveCreditData = async function (req, res) {
         res.status(201).json({success: true, account: account});
         
     } catch (error) {
+        console.log(error);
+        res.status(401).json({success: false, error: error});
+    }
+}
+
+module.exports.saveCreditDataAfterContest = async function (req, res) {
+    try {
+        var account = await accountSchema.findOne({_id: req.body.account_id});
+        account.credit -= parseInt(req.body.credit);
+        
+        var account = await accountSchema.update({_id: req.body.account_id}, account);
+
+        var doc = {
+            account_id: req.body.account_id,
+            contest_id: req.body.contest_id,
+            user_score: 0,
+            winner_status: false,
+            winner_date: ""
+        };
+
+        doc = await ContestsDataSchema.create(doc);
+
+        res.status(201).json({success: true, account: account});
+        
+    } catch (error) {
+        console.log(error);
+        res.status(401).json({success: false, error: error});
+    }
+}
+
+module.exports.getUserContestData = async function (req, res) {
+    try {
+        var contest_data = await ContestsDataSchema.findOne({"account_id": req.body.account_id,
+                                                           "contest_id": req.body.contest_id});
+        if (contest_data == null) {
+            res.status(201).json({success: false, score: 0});
+        } else {
+            res.status(201).json({success: true, score: contest_data.user_score});
+        }
+        
+    } catch (error) {
+        console.log(error);
+        res.status(401).json({success: false, error: error});
+    }
+}
+
+module.exports.getNotifications = async function (req, res) {
+    try {
+        var doc = await NotificationSchema.find({}, {}, {sort: {created_at: -1}});
+        res.status(201).json({success: true, doc: doc});
+    } catch (error) {
+        console.log(error);
+        res.status(401).json({success: false, error: error});
+    }
+}
+
+module.exports.readNotifications = async function (req, res) {
+    try {
+        const modify = req.body.notifications;
+        modify.map(async (cursor)=>{
+            await NotificationSchema.update({user_id: cursor.user_id, title: cursor.title, created_at: cursor.created_at}, cursor)
+        })
+        res.status(201).json({success: true });
+    } catch(error) {
         console.log(error);
         res.status(401).json({success: false, error: error});
     }

@@ -7,6 +7,8 @@ const Games = require('./modules/games/router.js');
 const GameData = require('./modules/game_data/router.js');
 const Base = require('./modules/base/router.js');
 const Questions = require('./modules/questions/router.js');
+const Rewards = require('./modules/rewards/router.js');
+const Contests = require('./modules/contests/router.js');
 
 require('./config/db_connection.js');
 require('./config/passport.js');
@@ -73,13 +75,8 @@ app.use('/api/games', Games);
 app.use('/api/game_data', GameData);
 app.use('/api/base', Base);
 app.use('/api/questions', Questions);
-// app.use('/api/profile', Profile);
-// app.use('/category', Category);
-// app.use('/faq', Faq);
-// app.use('/support', Support);
-// app.use('/events', Events);
-// app.use('/base', Base);
-// app.use('/photo', Photo);
+app.use('/api/rewards', Rewards);
+app.use('/api/contests', Contests);
 
 
 app.get('*', (req,res) =>{
@@ -124,7 +121,7 @@ app.use(function (err, req, res, next) {
 
 // web server 8080
 
-app.listen(80, () => console.log('-- [ FRIENDEALER NODE ] SERVER STARTED LISTENING ON PORT 80 --'));
+app.listen(80, () => console.log('-- [ BLACJACK NODE ] SERVER STARTED LISTENING ON PORT 80 --'));
 
 // Socket Server Engine
 
@@ -135,6 +132,28 @@ var port = 8889;
 server.listen( port ,function () {
     let host = server.address().address;
     let port = server.address().port;
-    console.log("-- [ FRIENDEALER SOCKET ] "+" SERVER STARTED ON PORT " + port + " --");
+    console.log("-- [ BLACKJACK SOCKET ] "+" SERVER STARTED ON PORT " + port + " --");
     // console.log(server);
+});
+
+let user_socket;
+
+io.on('connection', function(socket){
+
+    socket.on('login', function(data) {
+        console.log("Login socket");
+        user_socket = socket;
+    });
+    socket.on('send:winner_notification', function (data) {
+        console.log("Notification", data);
+        if (user_socket) {
+            user_socket.emit('receive:winner_notification', data);
+        }
+    });
+
+    socket.on('receive:winner_notification', function (data) {
+        console.log("Recievie Notification", data);
+    });
+
+
 });

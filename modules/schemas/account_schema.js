@@ -52,8 +52,16 @@ var accountSchema = new Schema({
     default: "Active"
   },
   is_online: Boolean,
-  last_login: {
-    type: Date
+  last_rewarded_time: {
+    type: String,
+  },
+  reward_day: {
+    type: Number,
+    default: 1
+  },
+  today_rewarded: {
+    type: Boolean,
+    default: false
   },
   location: {
     type: String,
