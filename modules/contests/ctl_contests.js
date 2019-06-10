@@ -43,7 +43,18 @@ module.exports.addContest = async function (req, res) {
 
 module.exports.updateContest = async function (req, res) {
     try {
-        var doc = await ContestsSchema.update({_id: req.body.contest._id}, req.body.contest);
+        var doc = {
+            _id: req.body.contest._id,
+            contest_name: req.body.contest.contest_name,
+            contest_type: req.body.contest.contest_type,
+            entry_fee: req.body.contest.entry_fee,
+            contest_goal: req.body.contest.contest_goal,
+            contest_rewards: req.body.contest.contest_rewards,
+            start_time: req.body.contest.start_time.replace(/T/, ' '),
+            end_time: req.body.contest.end_time.replace(/T/, ' '),
+            contest_description: req.body.contest.contest_description,
+        };
+        doc = await ContestsSchema.update({_id: req.body.contest._id}, req.body.contest);
         res.status(201).json({success: true, doc: doc });
     } catch (error) {
         console.log(error);
