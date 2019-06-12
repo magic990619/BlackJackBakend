@@ -187,7 +187,7 @@ module.exports.saveGameData = async function (req, res) {
                 account_id: req.body.account_id,
                 game_id: req.body.game_id,
                 total_winning: (req.body.total_winning == "True") ? 1 : 0,
-                total_wagered: 1,
+                total_wagered: req.body.total_wagered,
                 won_credit: (req.body.won_credit > 0 ? req.body.won_credit : 0),
                 wining_percenet: 0,
                 played_hand: req.body.played_hand,
@@ -196,7 +196,7 @@ module.exports.saveGameData = async function (req, res) {
             doc = await DataSchema.create(doc);
         } else {
             gameData.total_winning += (req.body.total_winning == "True") ? 1 : 0;
-            gameData.total_wagered ++;
+            gameData.total_wagered += parseInt(req.body.total_wagered);
             gameData.played_hand += parseInt(req.body.played_hand);
             if (req.body.won_credit > 0)
                 gameData.won_credit += parseInt(req.body.won_credit);
