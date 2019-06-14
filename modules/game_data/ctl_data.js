@@ -165,6 +165,76 @@ module.exports.getGameDataByGameId = async function (req, res) {
 module.exports.saveGameData = async function (req, res) {
     try {
         
+
+        var  current_time = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);        
+        var winner_contest = [];
+        await ContestsDataSchema.aggregate([
+            { $match : 
+                {
+                    winner_status : false,
+                    account_id    : parseInt(req.body.account_id) 
+                } 
+            },
+            { $lookup:
+                {
+                    from: 'data_contests',
+                    localField: 'contest_id',
+                    foreignField: '_id',
+                    as: 'contestdetails'
+                },
+            },            
+        ]).exec( function(err, entered_contests){
+            if(err) throw err;
+            entered_contests.forEach(async cur_contest => {
+                if (cur_contest.contestdetails[0].start_time <= current_time && cur_contest.contestdetails[0].end_time >= current_time ) {
+                    switch (cur_contest.contestdetails[0].contest_type)
+                    {
+                        case "Amounts Wagered":
+                            cur_contest.user_score += parseInt(req.body.total_wagered);
+                            break;
+                        case "Credits Won":
+                            cur_contest.user_score += (req.body.won_credit > 0 ? parseInt(req.body.won_credit) : 0);
+                            break;
+                        case "Hands Played":
+                            cur_contest.user_score += parseInt(req.body.played_hand);
+                            break;
+                        case "Consective Wins":
+                            if (cur_contest.user_score < req.body.current_consec_win) {
+                                cur_contest.user_score = req.body.current_consec_win;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    if (cur_contest.user_score >= cur_contest.contestdetails[0].contest_goal) {
+                        cur_contest.winner_status = true;
+                        cur_contest.winner_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);
+                        var account = await accountSchema.findOne({_id: req.body.account_id});
+                        account.credit += cur_contest.contestdetails[0].contest_rewards;
+                        await accountSchema.update({_id: account._id}, account);
+                        winner_contest.push({
+                           contest_name: cur_contest.contestdetails[0].contest_name,
+                           contest_rewards: cur_contest.contestdetails[0].contest_rewards 
+                        });
+                        console.log(winner_contest);
+                        var new_notification = {
+                            user_id: account._id,
+                            title: "New Winner!",
+                            notification: account.user_name + " won the contest: " + cur_contest.contestdetails[0].contest_name,
+                        };
+                        new_notification = await NotificationSchema.create(new_notification);
+                        socket.emit('send:winner_notification', {
+                            winner_name: account.user_name,
+                            contest_name: cur_contest.contestdetails[0].contest_name
+                        });
+                    }
+                    cur_contest = await ContestsDataSchema.update({"_id": cur_contest._id}, cur_contest);
+                }
+            });
+            
+            // res.status(201).json({success: true, doc: contests_data});
+        });
+
         var account = await accountSchema.findOne({_id: req.body.account_id});
         account.credit = req.body.credit;
         if (req.body.won_credit > 0)
@@ -204,36 +274,38 @@ module.exports.saveGameData = async function (req, res) {
                                                 "game_id"      : req.body.game_id,
                                                 "played_date"  : req.body.played_date}, gameData);
         }
-        if (req.body.contest_mode == 1) {
-            var contest_data = await ContestsDataSchema.findOne({"account_id": req.body.account_id,
-                                                           "contest_id": req.body.contest_id});
-            if (req.body.contest_type == "Consective Wins") {
-                if (contest_data.user_score < parseInt(req.body.consec_wins)) {
-                    contest_data.user_score = parseInt(req.body.consec_wins);
-                }
-            } else {
-                contest_data.user_score += parseInt(req.body.score_get);
-            }
-            if (contest_data.user_score >= parseInt(req.body.contest_goal)) {
-                contest_data.winner_status = true;
-                contest_data.winner_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);
-                var current_contest = await ContestsSchema.findOne({"_id": req.body.contest_id});
-                var account = await accountSchema.findOne({_id: req.body.account_id});
-                var new_notification = {
-                    user_id: account._id,
-                    title: "New Winner!",
-                    notification: account.user_name + " won the contest: " + current_contest.contest_name,
-                };
-                new_notification = await NotificationSchema.create(new_notification);
-                socket.emit('send:winner_notification', {
-                    winner_name: account.user_name,
-                    contest_name: current_contest.contest_name
-                });
-            }
-            contest_data = await ContestsDataSchema.update({"_id": contest_data._id}, contest_data);
-        }
-        res.status(201).json({success: true, doc: doc});
         
+        console.log(winner_contest);
+        console.log("winner_contest");
+        res.status(201).json({success: true, winner_contest: winner_contest});
+        // if (req.body.contest_mode == 1) {
+        //     var contest_data = await ContestsDataSchema.findOne({"account_id": req.body.account_id,
+        //                                                    "contest_id": req.body.contest_id});
+        //     if (req.body.contest_type == "Consective Wins") {
+        //         if (contest_data.user_score < parseInt(req.body.consec_wins)) {
+        //             contest_data.user_score = parseInt(req.body.consec_wins);
+        //         }
+        //     } else {
+        //         contest_data.user_score += parseInt(req.body.score_get);
+        //     }
+        //     if (contest_data.user_score >= parseInt(req.body.contest_goal)) {
+        //         contest_data.winner_status = true;
+        //         contest_data.winner_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);
+        //         var current_contest = await ContestsSchema.findOne({"_id": req.body.contest_id});
+        //         var account = await accountSchema.findOne({_id: req.body.account_id});
+        //         var new_notification = {
+        //             user_id: account._id,
+        //             title: "New Winner!",
+        //             notification: account.user_name + " won the contest: " + current_contest.contest_name,
+        //         };
+        //         new_notification = await NotificationSchema.create(new_notification);
+        //         socket.emit('send:winner_notification', {
+        //             winner_name: account.user_name,
+        //             contest_name: current_contest.contest_name
+        //         });
+        //     }
+        //     contest_data = await ContestsDataSchema.update({"_id": contest_data._id}, contest_data);
+        // }
     } catch (error) {
         console.log(error);
         res.status(401).json({success: false, error: error});
