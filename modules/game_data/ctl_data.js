@@ -186,7 +186,7 @@ module.exports.saveGameData = async function (req, res) {
         ]).exec( function(err, entered_contests){
             if(err) throw err;
             entered_contests.forEach(async cur_contest => {
-                if (cur_contest.contestdetails[0].start_time <= current_time && cur_contest.contestdetails[0].end_time >= current_time ) {
+                if (cur_contest.contestdetails[0].game_id == req.body.game_id && cur_contest.contestdetails[0].start_time <= current_time && cur_contest.contestdetails[0].end_time >= current_time ) {
                     switch (cur_contest.contestdetails[0].contest_type)
                     {
                         case "Amounts Wagered":

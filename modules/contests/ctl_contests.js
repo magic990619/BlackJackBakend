@@ -6,7 +6,7 @@ var ContestsDataSchema = require("../schemas/contests_data_schema.js");
 module.exports.getAllContests = async function (req, res) {
     var  current_time = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);
     try {
-        ContestsSchema.find( { game_id: 0 } , function (err, doc) {
+        ContestsSchema.find( {} , function (err, doc) {
             if (err) {
                 console.log(err);
               res.status(201).json({success: false, message: err});
@@ -23,6 +23,7 @@ module.exports.getAllContests = async function (req, res) {
 module.exports.addContest = async function (req, res) {
     try {
         var doc = {
+            game_id: req.body.contest.game_id,
             contest_name: req.body.contest.contest_name,
             contest_type: req.body.contest.contest_type,
             entry_fee: req.body.contest.entry_fee,
@@ -85,7 +86,7 @@ module.exports.removeContest = async function (req, res) {
 module.exports.getAllContestsByAccountId = async function (req, res) {
     var  current_time = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').slice(0, 16);
     try {
-        var contests_data = await ContestsSchema.find( { game_id: 0 , "start_time" : { $lt: current_time }, "end_time" : { $gt: current_time }, });
+        var contests_data = await ContestsSchema.find( { game_id: req.body.game_id , "start_time" : { $lt: current_time }, "end_time" : { $gt: current_time }, });
         var user_contests_data = await ContestsDataSchema.find( {"account_id": req.body.account_id});
         res.status(201).json({success: false, doc: contests_data, user_contests_data: user_contests_data});
     } catch (error) {
