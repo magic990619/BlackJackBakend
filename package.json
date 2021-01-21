@@ -33,7 +33,7 @@
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^4.4.0",
     "screenfull": "^3.3.2",
-    "socket.io": "^2.0.4",
+    "socket.io": "^2.4.0",
     "socket.io-client": "^2.2.0",
     "socket.io-file": "^2.0.14",
     "socket.io-file-client": "^2.0.12",
