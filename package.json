@@ -24,7 +24,7 @@
     "jsonwebtoken": "^8.1.0",
     "jwt-decode": "^2.2.0",
     "material-components-web": "^0.25.0",
-    "mongoose": "^4.13.5",
+    "mongoose": "^5.7.5",
     "mongoose-auto-increment": "^5.0.1",
     "multer": "^1.3.0",
     "ng-file-upload": "^12.2.13",
